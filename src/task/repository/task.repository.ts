@@ -43,7 +43,7 @@ export class TaskRepository {
 
     async getTasks(offset?: number, limit?: number, sort?: SortDto[]): Promise<ListDataResponse<ITask>> {
         const query = this.taskModel.find();
-        const total = await query.count();
+        const total = await this.taskModel.find().count();
 
         if (offset !== null && offset !== undefined && limit !== null && limit !== undefined ) {
             query.skip(offset).limit(limit);
