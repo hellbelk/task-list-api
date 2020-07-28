@@ -4,10 +4,11 @@ import {InjectModel, Prop, Schema, SchemaFactory} from '@nestjs/mongoose';
 import {TaskDto} from '../dto/task.dto';
 import {Model, Document} from 'mongoose';
 import {SortDto} from '../dto/sort.dto';
+import {ListDataResponse} from '../model/list.data.response';
 
 @Schema()
 export class Task extends Document implements ITask {
-    @Prop({required: true, unique: true})
+    @Prop({required: true})
     priority: number;
 
     @Prop({required: true, unique: true})
@@ -33,15 +34,17 @@ export class TaskRepository {
     async insertTasks(taskDtos: TaskDto[]): Promise<void> {
         await this.taskModel.bulkWrite(taskDtos.map(task => ({
             updateOne: {
-                filter: {name: task.name, priority: task.priority},
+                filter: {name: task.name},
                 update: task,
                 upsert: true
             }
         })));
     }
 
-    async getTasks(offset?: number, limit?: number, sort?: SortDto[]): Promise<ITask[]> {
+    async getTasks(offset?: number, limit?: number, sort?: SortDto[]): Promise<ListDataResponse<ITask>> {
         const query = this.taskModel.find();
+        const total = await query.count();
+
         if (offset !== null && offset !== undefined && limit !== null && limit !== undefined ) {
             query.skip(offset).limit(limit);
         }
@@ -54,7 +57,13 @@ export class TaskRepository {
             query.sort(sortQueryArg);
         }
         const res =  await query.exec();
-        return res ? res.map(this.mapRes) : null;
+
+        return {
+            data: res ? res.map(this.mapRes) : null,
+            offset,
+            limit,
+            total
+        }
     }
 
     async deleteTask(id: string): Promise<void> {

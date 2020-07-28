@@ -5,6 +5,7 @@ import {TaskDto} from '../dto/task.dto';
 import {TaskRepository} from '../repository/task.repository';
 import {ITask} from '../model/task.model';
 import {SortDto} from '../dto/sort.dto';
+import {ListDataResponse} from '../model/list.data.response';
 
 @Injectable()
 export class TaskService {
@@ -29,7 +30,7 @@ export class TaskService {
         return this.taskRepository.insertTask(taskDto);
     }
 
-    async getTasks(offset?: number, limit?: number, sort?: SortDto[]): Promise<ITask[]> {
+    async getTasks(offset?: number, limit?: number, sort?: SortDto[]): Promise<ListDataResponse<ITask>> {
         return this.taskRepository.getTasks(offset, limit, sort);
     }
 

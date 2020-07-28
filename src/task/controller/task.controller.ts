@@ -2,7 +2,6 @@ import {
     Body,
     Controller, Delete,
     Get, Param,
-    ParseIntPipe,
     Post,
     Query,
     Req,
@@ -11,21 +10,25 @@ import {
     UseInterceptors
 } from '@nestjs/common';
 import {TaskDto} from '../dto/task.dto';
-import {SortTransformPipe} from '../pipes/sort.transform.pipe';
+import {ListDataQueryParamsPipe} from '../pipes/list.data.query.params.pipe';
 import {FileInterceptor} from '@nestjs/platform-express';
 import {TaskService} from '../service/task.service';
 import {ITask} from '../model/task.model';
 import {SortDto} from '../dto/sort.dto';
+import {ListDataResponse} from '../model/list.data.response';
+
+class TaskQueryParams {
+    offset: number;
+    limit: number;
+    sort: SortDto[];
+}
 
 @Controller('tasks')
 export class TaskController {
     constructor(private taskService: TaskService) {
     }
     @Get()
-    async getTasks(@Query('offset', ParseIntPipe) offset?: number,
-                   @Query('limit', ParseIntPipe) limit?: number,
-                   @Query('sort', SortTransformPipe) sort?: SortDto[]): Promise<ITask[]> {
-        console.log('sort', sort);
+    async getTasks(@Query(ListDataQueryParamsPipe) {offset, limit, sort}: TaskQueryParams): Promise<ListDataResponse<ITask>> {
         return this.taskService.getTasks(offset, limit, sort);
     }
 
