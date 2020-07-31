@@ -14,22 +14,16 @@ import {ListDataQueryParamsPipe} from '../pipes/list.data.query.params.pipe';
 import {FileInterceptor} from '@nestjs/platform-express';
 import {TaskService} from '../service/task.service';
 import {ITask} from '../model/task.model';
-import {SortDto} from '../dto/sort.dto';
 import {ListDataResponse} from '../model/list.data.response';
-
-class TaskQueryParams {
-    offset: number;
-    limit: number;
-    sort: SortDto[];
-}
+import {ListDataQueryParams} from '../dto/list.data.query.params';
 
 @Controller('tasks')
 export class TaskController {
     constructor(private taskService: TaskService) {
     }
     @Get()
-    async getTasks(@Query(ListDataQueryParamsPipe) {offset, limit, sort}: TaskQueryParams): Promise<ListDataResponse<ITask>> {
-        return this.taskService.getTasks(offset, limit, sort);
+    async getTasks(@Query(ListDataQueryParamsPipe) {offset, limit, sort, filter}: ListDataQueryParams): Promise<ListDataResponse<ITask>> {
+        return this.taskService.getTasks(offset, limit, sort, filter);
     }
 
     @Post()

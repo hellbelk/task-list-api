@@ -1,6 +1,7 @@
 import {ArgumentMetadata, BadRequestException, Injectable, PipeTransform} from '@nestjs/common';
-import {SortDto} from '../dto/sort.dto';
 import {ListDataQueryParams} from '../dto/list.data.query.params';
+import {Filter} from '../model/filter.model';
+import {Sort} from '../model/sort.model';
 
 @Injectable()
 export class ListDataQueryParamsPipe implements PipeTransform<any, ListDataQueryParams> {
@@ -13,20 +14,44 @@ export class ListDataQueryParamsPipe implements PipeTransform<any, ListDataQuery
             }
 
             if (value.hasOwnProperty('sort')) {
-                const rawSort = value.sort;
                 result.sort = value.sort instanceof Array
                     ? value.sort.map(this.mapSortParam)
-                    : this.mapSortParam(value.sort);
+                    : [this.mapSortParam(value.sort)];
+            }
+
+            if (value.hasOwnProperty('filter')) {
+                result.filter = value.filter instanceof Array
+                    ? value.filter.map(this.mapFilterParam)
+                    : [this.mapFilterParam(value.filter)];
             }
         }
 
         return result;
     }
 
-    mapSortParam(value: string): SortDto {
+    mapFilterParam(value: string): Filter {
+        const separatorIndex = value.indexOf('=');
+        if (separatorIndex === -1) {
+            throw new BadRequestException();
+        }
+
+        const property = value.substring(0, separatorIndex);
+        const propertyValue = value.substring(separatorIndex + 1);
+
+        if (!property.length || !propertyValue.length) {
+            throw new BadRequestException();
+        }
+
+        return {
+            property,
+            value: decodeURIComponent(propertyValue)
+        }
+    }
+
+    mapSortParam(value: string): Sort {
         const terms = value.split(',');
 
-        if (terms.length !== 2 || terms[1] !== 'asc' && terms[1] !== 'desc') {
+        if (terms.length !== 2 || terms[0].length || terms[1] !== 'asc' && terms[1] !== 'desc') {
             throw new BadRequestException();
         }
 

@@ -3,8 +3,9 @@ import {ITask} from '../model/task.model';
 import {InjectModel, Prop, Schema, SchemaFactory} from '@nestjs/mongoose';
 import {TaskDto} from '../dto/task.dto';
 import {Model, Document} from 'mongoose';
-import {SortDto} from '../dto/sort.dto';
 import {ListDataResponse} from '../model/list.data.response';
+import {Filter} from '../model/filter.model';
+import {Sort} from '../model/sort.model';
 
 @Schema()
 export class Task extends Document implements ITask {
@@ -41,25 +42,44 @@ export class TaskRepository {
         })));
     }
 
-    async getTasks(offset?: number, limit?: number, sort?: SortDto[]): Promise<ListDataResponse<ITask>> {
-        const query = this.taskModel.find();
-        const total = await this.taskModel.find().count();
-
-        if (offset !== null && offset !== undefined && limit !== null && limit !== undefined ) {
-            query.skip(offset).limit(limit);
+    async getTasks(offset?: number, limit?: number, sort?: Sort[], filters?: Filter[]): Promise<ListDataResponse<ITask>> {
+        const conditions = {};
+        if (filters && filters.length) {
+            console.log(filters);
+            filters.forEach(filter => {
+                switch (filter.property) {
+                    case 'priority': conditions[filter.property] = Number(filter.value); break;
+                    case 'name': conditions[filter.property] = new RegExp(`^${filter.value}`, 'i'); break;
+                    case 'description': conditions[filter.property] = new RegExp(filter.value, 'i'); break;
+                }
+            });
         }
-        if (sort && sort.length) {
-            const sortQueryArg = sort.reduce((res: any, item: SortDto) => {
-                res[item.property] = item.direction === 'asc' ? 1 : -1;
-                return res;
-            }, {});
 
-            query.sort(sortQueryArg);
+        const request = () => this.taskModel.find(conditions);
+
+        const total = await request().count();
+        let data = null;
+        if (total) {
+            const query = request().find();
+
+
+            if (offset !== null && offset !== undefined && limit !== null && limit !== undefined) {
+                query.skip(offset).limit(limit);
+            }
+            if (sort && sort.length) {
+                const sortQueryArg = sort.reduce((res: any, item: Sort) => {
+                    res[item.property] = item.direction === 'asc' ? 1 : -1;
+                    return res;
+                }, {});
+
+                query.sort(sortQueryArg);
+            }
+            const res = await query.exec();
+            data = res ? res.map(this.mapRes) : null
         }
-        const res =  await query.exec();
 
         return {
-            data: res ? res.map(this.mapRes) : null,
+            data,
             offset,
             limit,
             total
