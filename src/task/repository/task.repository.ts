@@ -6,6 +6,7 @@ import {Model, Document} from 'mongoose';
 import {ListDataResponse} from '../model/list.data.response';
 import {Filter} from '../model/filter.model';
 import {Sort} from '../model/sort.model';
+import {Option} from '../model/option.model';
 
 @Schema()
 export class Task extends Document implements ITask {
@@ -32,14 +33,19 @@ export class TaskRepository {
         return res ? this.mapRes(res) : null;
     }
 
-    async insertTasks(taskDtos: TaskDto[]): Promise<void> {
-        await this.taskModel.bulkWrite(taskDtos.map(task => ({
+    async insertTasks(taskDtos: TaskDto[]): Promise<string[]> {
+        const res = await this.taskModel.bulkWrite(taskDtos.map(task => ({
             updateOne: {
                 filter: {name: task.name},
                 update: task,
                 upsert: true
             }
         })));
+
+        return Object.keys(res.upsertedIds).reduce((arr, id) => {
+            arr.push(res.upsertedIds[id]);
+            return arr;
+        }, []);
     }
 
     async getTasks(offset?: number, limit?: number, sort?: Sort[], filters?: Filter[]): Promise<ListDataResponse<ITask>> {
@@ -86,8 +92,16 @@ export class TaskRepository {
         }
     }
 
-    async deleteTask(id: string): Promise<void> {
-        await this.taskModel.remove({_id: id})
+    async deleteTask(id: string, option: Option, priority?: number): Promise<void> {
+        const condition = {};
+        if (option && option != 'eq' && priority) {
+            const operation = `$${option}`;
+            condition['priority'] = {[operation]: priority}
+        } else if (!option || option === 'eq') {
+            condition['_id'] = id;
+        }
+
+        await this.taskModel.remove(condition);
     }
 
     private mapRes(data: any): ITask {

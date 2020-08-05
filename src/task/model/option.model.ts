@@ -1,0 +1,1 @@
+export type Option = 'eq' | 'lte' | 'gte';

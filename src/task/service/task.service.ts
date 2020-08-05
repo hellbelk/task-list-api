@@ -7,13 +7,14 @@ import {ITask} from '../model/task.model';
 import {ListDataResponse} from '../model/list.data.response';
 import {Sort} from '../model/sort.model';
 import {Filter} from '../model/filter.model';
+import {Option} from '../model/option.model';
 
 @Injectable()
 export class TaskService {
     constructor(private readonly csvParser: CsvParser, private readonly taskRepository: TaskRepository) {
     }
 
-    async uploadTasksCSV(file): Promise<void> {
+    async uploadTasksCSV(file): Promise<string[]> {
         const readStream = new Readable();
         readStream.push(file.buffer)
         readStream.push(null);
@@ -23,7 +24,7 @@ export class TaskService {
         return this.taskRepository.insertTasks(tasks);
     }
 
-    async insertTasks(taskDtos: TaskDto[]): Promise<void> {
+    async insertTasks(taskDtos: TaskDto[]): Promise<string[]> {
         return this.taskRepository.insertTasks(taskDtos);
     }
 
@@ -35,7 +36,7 @@ export class TaskService {
         return this.taskRepository.getTasks(offset, limit, sort, filters);
     }
 
-    async deleteTask(id: string): Promise<void> {
-        return this.taskRepository.deleteTask(id);
+    async deleteTask(id: string, option: Option, priority?: number): Promise<void> {
+        return this.taskRepository.deleteTask(id, option, priority);
     }
 }

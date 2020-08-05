@@ -29,7 +29,8 @@ export class ListDataQueryParamsPipe implements PipeTransform<any, ListDataQuery
         return result;
     }
 
-    mapFilterParam(value: string): Filter {
+    mapFilterParam(rawValue: string): Filter {
+        const value = decodeURIComponent(rawValue);
         const separatorIndex = value.indexOf('=');
         if (separatorIndex === -1) {
             throw new BadRequestException();
@@ -44,14 +45,15 @@ export class ListDataQueryParamsPipe implements PipeTransform<any, ListDataQuery
 
         return {
             property,
-            value: decodeURIComponent(propertyValue)
+            value: propertyValue
         }
     }
 
-    mapSortParam(value: string): Sort {
-        const terms = value.split(',');
+    mapSortParam(rawValue: string): Sort {
+        const value = decodeURIComponent(rawValue);
+        const terms = value.split('=');
 
-        if (terms.length !== 2 || terms[0].length || terms[1] !== 'asc' && terms[1] !== 'desc') {
+        if (terms.length !== 2 || !terms[0].length || terms[1] !== 'asc' && terms[1] !== 'desc') {
             throw new BadRequestException();
         }
 
