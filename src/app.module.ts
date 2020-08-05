@@ -10,8 +10,7 @@ const connectionString = process.env.MONGO_URL;
   imports: [TaskModule,
     MongooseModule.forRoot(connectionString),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'client'),
-      exclude: ['/tasks*']
+      rootPath: join(__dirname, '..', 'client')
     })]
 })
 export class AppModule {}
